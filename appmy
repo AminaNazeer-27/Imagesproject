@@ -1,0 +1,159 @@
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+import re
+
+app = Flask(__name__)
+app.secret_key = "secret_key"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expiremed.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# -------------------- Models --------------------
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+
+class Medicine(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    name = db.Column(db.String(100))
+    type = db.Column(db.String(50))
+    dosage = db.Column(db.Float)
+    dosage_unit = db.Column(db.String(20))
+    count = db.Column(db.String(10))
+    timing = db.Column(db.String(50))
+    before_after_food = db.Column(db.String(20))
+    expiry_date = db.Column(db.Date)
+    status = db.Column(db.String(20), default="Pending")  # Taken, Pending, Not Taken
+
+class AlternativeMedicine(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    medicine_name = db.Column(db.String(100))
+    alternative = db.Column(db.String(200))
+
+db.create_all()
+
+# -------------------- Routes --------------------
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        # Basic validation
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash("Invalid email format")
+            return redirect(url_for('register'))
+        if len(password) < 6:
+            flash("Password must be at least 6 characters")
+            return redirect(url_for('register'))
+
+        if User.query.filter_by(email=email).first():
+            flash("Email already exists!")
+            return redirect(url_for('register'))
+
+        new_user = User(email=email, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Registered successfully! Login now.")
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        user = User.query.filter_by(email=email, password=password).first()
+        if user:
+            session['user_id'] = user.id
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Invalid credentials!")
+            return redirect(url_for('login'))
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('home'))
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    medicines = Medicine.query.filter_by(user_id=user.id).all()
+    return render_template('dashboard.html', user=user, medicines=medicines)
+
+@app.route('/add_medicine', methods=['GET', 'POST'])
+def add_medicine():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        name = request.form.get('name')
+        type = request.form.get('type')
+        dosage = request.form.get('dosage')
+        dosage_unit = request.form.get('dosage_unit')
+        count = request.form.get('count')
+        timing = request.form.get('timing')
+        before_after_food = request.form.get('before_after_food')
+        expiry_date = request.form.get('expiry_date')
+        new_medicine = Medicine(
+            user_id=session['user_id'],
+            name=name,
+            type=type,
+            dosage=float(dosage),
+            dosage_unit=dosage_unit,
+            count=count,
+            timing=timing,
+            before_after_food=before_after_food,
+            expiry_date=datetime.strptime(expiry_date, '%Y-%m-%d'),
+            status="Pending"
+        )
+        db.session.add(new_medicine)
+        db.session.commit()
+        flash("Medicine added successfully!")
+        return redirect(url_for('dashboard'))
+    return render_template('add_medicine.html')
+
+@app.route('/delete_medicine/<int:id>')
+def delete_medicine(id):
+    med = Medicine.query.get(id)
+    if med:
+        db.session.delete(med)
+        db.session.commit()
+        flash("Deleted successfully!")
+    return redirect(url_for('dashboard'))
+
+@app.route('/mark_medicine/<int:id>/<status>')
+def mark_medicine(id, status):
+    med = Medicine.query.get(id)
+    if med:
+        med.status = status
+        db.session.commit()
+    return redirect(url_for('dashboard'))
+
+@app.route('/reminder')
+def reminder():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    medicines = Medicine.query.filter_by(user_id=session['user_id']).all()
+    return render_template('reminder.html', medicines=medicines)
+
+@app.route('/alternative_medicine')
+def alternative_medicine():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    medicines = Medicine.query.filter_by(user_id=session['user_id']).all()
+    return render_template('alternative.html', medicines=medicines)
+
+if __name__ == "__main__":
+    app.run(debug=True)
