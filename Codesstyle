@@ -1,0 +1,297 @@
+index. html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Medicine Reminder System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="navbar">
+    <div><b>Medicine Tracker</b></div>
+    <div>
+      <a href="{{ url_for('login') }}">Login</a>
+      <a href="{{ url_for('register') }}">Register</a>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>Welcome to Medicine Reminder & Tracker</h1>
+    <p>Track your medicines, set reminders, and find safe alternatives</p>
+  </div>
+
+  <div class="features">
+    <div class="card">
+      <div class="icon pill-bottle"></div>
+      <h3>Track Medicine</h3>
+      <p>Keep track of your medicines, expiry dates, and usage history.</p>
+    </div>
+    <div class="card">
+      <div class="icon pill-clock"></div>
+      <h3>Set Reminder</h3>
+      <p>Never forget your dose. Get timely reminders for your medicines.</p>
+    </div>
+    <div class="card">
+      <div class="icon pill-alternative"></div>
+      <h3>Find Alternatives</h3>
+      <p>Explore alternative medicines for better options and safety.</p>
+    </div>
+  </div>
+
+  <div class="actions" style="text-align:center; margin:30px;">
+    <a href="{{ url_for('register') }}" class="btn btn-success">Register</a>
+    <a href="{{ url_for('login') }}" class="btn btn-info">Login</a>
+  </div>
+</body>
+</html>
+
+login. html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Login</h2>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Enter Username" required>
+      <input type="password" name="password" placeholder="Enter Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p style="text-align:center;margin-top:10px;">
+      Don’t have an account? <a href="{{ url_for('register') }}">Register</a>
+    </p>
+  </div>
+</body>
+</html>
+
+register. html 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h2>Register</h2>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Choose Username" required>
+      <input type="password" name="password" placeholder="Choose Password" required>
+      <button type="submit">Register</button>
+    </form>
+    <p style="text-align:center;margin-top:10px;">
+      Already registered? <a href="{{ url_for('login') }}">Login</a>
+    </p>
+  </div>
+</body>
+</html>
+
+addmedicibe. html 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Medicine</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="navbar">
+    <div><b>Medicine Tracker</b></div>
+    <div>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+
+  <div class="form-container">
+    <h2>Add Medicine</h2>
+    <form method="POST">
+      <input type="text" name="name" placeholder="Medicine Name" required>
+
+      <select name="type" required>
+        <option value="">Select Type</option>
+        <option value="Tablet">Tablet</option>
+        <option value="Syrup">Syrup</option>
+        <option value="Ointment">Ointment</option>
+      </select>
+
+      <input type="number" name="dosage" placeholder="Dosage" required>
+      <select name="dosage_unit" required>
+        <option value="mg">mg</option>
+        <option value="ml">ml</option>
+        <option value="g">g</option>
+      </select>
+
+      <select name="count" required>
+        <option value="0.5">Half</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+      </select>
+
+      <select name="before_after_food" required>
+        <option value="Before Food">Before Food</option>
+        <option value="After Food">After Food</option>
+      </select>
+
+      <input type="time" name="timing" required>
+      <input type="date" name="expiry_date" required>
+
+      <button type="submit">Add Medicine</button>
+    </form>
+  </div>
+</body>
+</html>
+
+remainder. html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reminders</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="navbar">
+    <div><b>Medicine Tracker</b></div>
+    <div>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+
+  <div class="container fade-in">
+    <h2>Your Reminders</h2>
+    {% if reminders %}
+    <table class="table">
+      <tr>
+        <th>Medicine</th>
+        <th>Time</th>
+        <th>Action</th>
+      </tr>
+      {% for r in reminders %}
+      <tr class="row-animate">
+        <td>{{ r.medicine_name }}</td>
+        <td>{{ r.time }}</td>
+        <td><a class="btn btn-danger btn-sm" href="{{ url_for('delete_reminder', id=r.id) }}">🗑 Delete</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No reminders yet.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
+
+add alternative. html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Alternative Medicines</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="navbar">
+    <div><b>Medicine Tracker</b></div>
+    <div>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+
+  <div class="container fade-in">
+    <h2>Alternative Medicines</h2>
+    {% if alternatives %}
+    <table class="table">
+      <tr>
+        <th>Medicine</th>
+        <th>Alternative</th>
+        <th>Condition</th>
+      </tr>
+      {% for a in alternatives %}
+      <tr class="row-animate">
+        <td>{{ a.medicine_name }}</td>
+        <td>{{ a.alternative_name }}</td>
+        <td>{{ a.condition }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No alternatives available.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
+
+remainder. html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reminders</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <div><b>Medicine Tracker</b></div>
+    <div>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+
+  <div class="container" style="margin:30px;">
+    <h2 style="text-align:center; margin-bottom:20px;">Your Medicine Reminders</h2>
+
+    {% if reminders %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Medicine</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reminders %}
+        <tr class="row-animate">
+          <td>{{ r.medicine_name }}</td>
+          <td>{{ r.timing }}</td>
+          <td>
+            {% if r.status == 'Taken' %}
+              <span class="status status-taken">Taken</span>
+            {% elif r.status == 'Pending' %}
+              <span class="status status-pending">Pending</span>
+            {% else %}
+              <span class="status status-not">Not Taken</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('mark_medicine', id=r.id, status='Taken') }}" class="btn btn-success btn-sm">Mark Taken</a>
+            <a href="{{ url_for('delete_reminder', id=r.id) }}" class="btn btn-danger btn-sm">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p style="text-align:center; margin-top:20px;">No reminders set yet.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
+
